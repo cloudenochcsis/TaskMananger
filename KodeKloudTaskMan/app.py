@@ -1,3 +1,12 @@
+"""
+Task Manager Flask Application.
+
+This module implements a simple task management web application using Flask.
+It provides features for user authentication, task creation, updating, and deletion.
+Tasks can be assigned to different users and filtered by status.
+"""
+
+import csv
 import sqlite3
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g
@@ -10,6 +19,27 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev'  # Change this to a random secret key in production
 app.config['DATABASE'] = os.path.join(app.instance_path, 'task_manager.sqlite')
 
+def read_csv(file_path):
+    """
+    Read data from a CSV file and print each row.
+    
+    Args:
+        file_path (str): Path to the CSV file to be read
+        
+    Returns:
+        None: This function prints each row to the console but doesn't return any value
+        
+    Example:
+        >>> read_csv('data.csv')
+        ['header1', 'header2', 'header3']
+        ['value1', 'value2', 'value3']
+        ...
+    """
+    with open(file_path, 'r') as f:
+        csvreader = csv.reader(f)
+        for row in csvreader:
+            print(row)
+
 # Ensure the instance folder exists
 try:
     os.makedirs(app.instance_path)
@@ -18,6 +48,12 @@ except OSError:
 
 # Database connection functions
 def get_db():
+    """
+    Get a database connection from the Flask application context.
+    
+    Returns:
+        sqlite3.Connection: Database connection with row factory set to sqlite3.Row
+    """
     if 'db' not in g:
         g.db = sqlite3.connect(
             app.config['DATABASE'],
@@ -27,12 +63,21 @@ def get_db():
     return g.db
 
 def close_db(e=None):
+    """
+    Close the database connection if it exists.
+    
+    Args:
+        e: Exception that might have occurred (default: None)
+    """
     db = g.pop('db', None)
     if db is not None:
         db.close()
 
 # Initialize the database
 def init_db():
+    """
+    Initialize the database with schema from schema.sql.
+    """
     db = get_db()
     with app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
@@ -48,10 +93,29 @@ app.teardown_appcontext(close_db)
 
 # Simple password hashing (not secure for production)
 def hash_password(password):
+    """
+    Hash a password using SHA-1 (not secure for production).
+    
+    Args:
+        password (str): Plain text password
+        
+    Returns:
+        str: Hexadecimal digest of the hashed password
+    """
     return hashlib.sha1(password.encode()).hexdigest()
+
 
 # Authentication functions
 def login_required(view):
+    """
+    Decorator to require login for views.
+    
+    Args:
+        view (function): The view function to be decorated
+        
+    Returns:
+        function: The wrapped view function
+    """
     def wrapped_view(**kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
@@ -62,12 +126,24 @@ def login_required(view):
 # Routes
 @app.route('/')
 def index():
+    """
+    Route for the homepage.
+    
+    Returns:
+        Response: Redirect to dashboard if logged in, otherwise redirect to login
+    """
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
 @app.route('/register', methods=('GET', 'POST'))
 def register():
+    """
+    User registration route.
+    
+    Returns:
+        Response: Rendered register template or redirect to login
+    """
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -97,6 +173,12 @@ def register():
 
 @app.route('/login', methods=('GET', 'POST'))
 def login():
+    """
+    User login route.
+    
+    Returns:
+        Response: Rendered login template or redirect to dashboard
+    """
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -123,16 +205,28 @@ def login():
 
 @app.route('/logout')
 def logout():
+    """
+    User logout route.
+    
+    Returns:
+        Response: Redirect to login page
+    """
     session.clear()
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    """
+    Dashboard route showing all tasks with optional filtering.
+    
+    Returns:
+        Response: Rendered dashboard template with tasks, users, and statuses
+    """
     db = get_db()
     status_filter = request.args.get('status', '')
     user_filter = request.args.get('user', '')
-    
+
     query = '''
         SELECT t.id, t.title, t.description, t.status, t.created_at, 
                creator.username as created_by, assignee.username as assigned_to
@@ -142,7 +236,7 @@ def dashboard():
         WHERE 1=1
     '''
     params = []
-    
+
     if status_filter:
         query += ' AND t.status = ?'
         params.append(status_filter)
@@ -171,6 +265,12 @@ def dashboard():
 @app.route('/task/create', methods=['POST'])
 @login_required
 def create_task():
+    """
+    Create a new task.
+    
+    Returns:
+        Response: Redirect to dashboard with success or error message
+    """
     title = request.form['title']
     description = request.form['description']
     assigned_to = request.form['assigned_to']
@@ -182,8 +282,7 @@ def create_task():
     
     db = get_db()
     db.execute(
-        '''INSERT INTO tasks (title, description, status, created_by, assigned_to)
-           VALUES (?, ?, ?, ?, ?)''',
+        'INSERT INTO tasks (title, description, status, created_by, assigned_to) VALUES (?, ?, ?, ?, ?)',
         (title, description, status, session['user_id'], assigned_to)
     )
     db.commit()
@@ -193,6 +292,15 @@ def create_task():
 @app.route('/task/<int:id>/update', methods=['POST'])
 @login_required
 def update_task(id):
+    """
+    Update an existing task's status and assignment.
+    
+    Args:
+        id (int): Task ID
+        
+    Returns:
+        Response: Redirect to dashboard with success message
+    """
     status = request.form['status']
     assigned_to = request.form['assigned_to']
     
@@ -208,6 +316,15 @@ def update_task(id):
 @app.route('/task/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_task(id):
+    """
+    Delete a task.
+    
+    Args:
+        id (int): Task ID
+        
+    Returns:
+        Response: Redirect to dashboard with success message
+    """
     db = get_db()
     db.execute('DELETE FROM tasks WHERE id = ?', (id,))
     db.commit()
@@ -216,4 +333,4 @@ def delete_task(id):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    app.run(debug=True, host='0.0.0.0', port=5000)

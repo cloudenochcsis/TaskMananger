@@ -1,0 +1,17 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# React Security Rules
+# Applies to: **/*.{jsx,tsx}
+
+When working with React components:
+
+- Never use dangerouslySetInnerHTML without proper sanitization
+- Use React's built-in XSS protections
+- Sanitize props before rendering user-generated content
+- Avoid using refs to directly manipulate the DOM
+- Use secure state management practices
+- Implement proper authentication checks for protected routes
+- Never store sensitive information in localStorage or sessionStorage

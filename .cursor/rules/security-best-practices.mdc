@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Security Best Practices
+# Applies to: **/*.{js,ts,jsx,tsx,py,rb}
+
+When generating or modifying code, follow these security guidelines:
+
+- Never use eval() or similar functions that execute dynamic code
+- Sanitize all user inputs before processing
+- Use parameterized queries for database operations to prevent SQL injection
+- Implement proper input validation for all user-provided data
+- Apply the principle of least privilege for all operations
+- Use secure, up-to-date encryption methods (AES-256, RSA-2048 or higher)
+- Avoid storing sensitive information in client-side code
+- Implement proper error handling that doesn't expose system details
+- Use HTTPS for all external communications
+- Follow OWASP Top 10 guidelines to prevent common vulnerabilities
+
+For authentication:
+- Use secure password hashing with bcrypt or Argon2
+- Implement proper session management with secure cookies
+- Use CSRF tokens for form submissions
+- Set appropriate security headers in all responses
+
+For API endpoints:
+- Implement rate limiting to prevent abuse
+- Use proper authentication and authorization checks
+- Validate all incoming data against a schema

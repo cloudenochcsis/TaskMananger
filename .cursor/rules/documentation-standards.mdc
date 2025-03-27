@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Create a documentation rule file specifying standards
+rule_file_path = '.cursor/rules/documentation-standards.mdc'
+
+# Define the content of the rule file
+rule_content = """# Documentation Standards
+# Applies to: **/*.{js,ts,py,rb}
+
+When generating documentation, follow these guidelines:
+
+- Use clear and concise language
+- Create documentation that is PEP 8 Compliant
+- Include code examples for better understanding
+- Ensure all parameters and return values are documented
+- Use consistent formatting and style
+- Avoid jargon and overly technical terms
+- Provide links to external references when applicable
+- Include usage examples for complex functions or classes
+"""
+
+# Write the content to the rule file
+with open(rule_file_path, 'w') as file:
+    file.write(rule_content)
