@@ -22,7 +22,7 @@
     
     <main class="container">
         {% for message in get_flashed_messages() %}
-            <div class="flash">{{ message }}</div>
+            <div class="flash {% if 'successfully' in message %}success{% else %}error{% endif %}">{{ message }}</div>
         {% endfor %}
         
         {% block content %}{% endblock %}
