@@ -58,8 +58,8 @@ services:
 Make sure your `requirements.txt` includes gunicorn:
 
 ```
-Flask==2.0.1
-gunicorn==20.1.0
+Flask==3.0.0
+gunicorn==23.0.0
 # other dependencies...
 ```
 

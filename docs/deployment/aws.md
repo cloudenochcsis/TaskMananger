@@ -45,8 +45,8 @@ web: gunicorn --bind 0.0.0.0:8080 --workers 4 --threads 2 TaskManager.app:app
 Update your `requirements.txt` file to include gunicorn:
 
 ```
-Flask==2.0.1
-gunicorn==20.1.0
+Flask==3.0.0
+gunicorn==23.0.0
 # other dependencies...
 ```
 

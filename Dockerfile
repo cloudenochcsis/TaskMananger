@@ -48,7 +48,7 @@ COPY TaskManager/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn
+    pip install --no-cache-dir gunicorn==23.0.0
 
 # No initialization script needed - handled in CMD
 
