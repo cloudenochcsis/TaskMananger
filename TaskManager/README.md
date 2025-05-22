@@ -1,2 +1,0 @@
-# TaskManager
-Task Manager Application
