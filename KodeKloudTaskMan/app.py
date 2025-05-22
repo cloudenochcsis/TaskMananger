@@ -9,6 +9,7 @@ Tasks can be assigned to different users and filtered by status.
 import csv
 import sqlite3
 import os
+import binascii
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g
 from datetime import datetime
 import hashlib
@@ -16,7 +17,7 @@ import logging
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dev'  # Change this to a random secret key in production
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')  # Use environment variable or fallback to 'dev' for development
 app.config['DATABASE'] = os.path.join(app.instance_path, 'task_manager.sqlite')
 
 def read_csv(file_path):
@@ -91,10 +92,10 @@ def init_db_command():
 # Register close_db function with app
 app.teardown_appcontext(close_db)
 
-# Simple password hashing (not secure for production)
+# Password hashing using a more secure method
 def hash_password(password):
     """
-    Hash a password using SHA-1 (not secure for production).
+    Hash a password using a secure method (hashlib.pbkdf2_hmac).
     
     Args:
         password (str): Plain text password
@@ -102,7 +103,36 @@ def hash_password(password):
     Returns:
         str: Hexadecimal digest of the hashed password
     """
-    return hashlib.sha1(password.encode()).hexdigest()
+    salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
+    pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), 
+                                salt, 100000)
+    pwdhash = binascii.hexlify(pwdhash)
+    return (salt + pwdhash).decode('ascii')
+
+def verify_password(stored_password, provided_password):
+    """
+    Verify a stored password against the provided password.
+    
+    Args:
+        stored_password (str): The stored password hash
+        provided_password (str): The password provided by the user
+        
+    Returns:
+        bool: True if the password matches, False otherwise
+    """
+    # For backward compatibility with old SHA-1 hashes
+    if len(stored_password) == 40:  # SHA-1 hash length
+        return stored_password == hashlib.sha1(provided_password.encode()).hexdigest()
+    
+    # New secure password verification
+    salt = stored_password[:64]
+    stored_hash = stored_password[64:]
+    pwdhash = hashlib.pbkdf2_hmac('sha512', 
+                                  provided_password.encode('utf-8'), 
+                                  salt.encode('ascii'), 
+                                  100000)
+    pwdhash = binascii.hexlify(pwdhash).decode('ascii')
+    return pwdhash == stored_hash
 
 
 # Authentication functions
@@ -190,7 +220,8 @@ def login():
 
         if user is None:
             error = 'Incorrect username.'
-        elif user['password'] != hash_password(password):
+        # For the new password hashing method, we need a verify_password function
+        elif not verify_password(user['password'], password):
             error = 'Incorrect password.'
 
         if error is None:
