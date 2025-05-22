@@ -2,39 +2,7 @@
 
 A Flask-based web application for managing tasks and projects. This application provides a simple yet powerful interface for users to create, assign, and track tasks within their team.
 
-[![Version](https://img.shields.io/badge/version-v1.0.1-blue.svg)](https://github.com/cloudenochcsis/TaskMananger/releases/tag/v1.0.1)
 
-## Recent Changes (v1.0.1)
-
-- 🛠️ Fixed database path mismatch that was causing "no such table: users" error
-- 🔒 Enhanced security with PBKDF2 password hashing and salting
-- 🔑 Moved sensitive configuration to environment variables
-- 🐳 Improved Docker configuration for better consistency and reliability
-- 📝 Updated documentation with detailed setup instructions
-
-## Features
-
-- 🔐 User Authentication
-  - Secure user registration and login
-  - Advanced password hashing with PBKDF2
-  - Session management
-
-- 📋 Task Management
-  - Create new tasks with title and description
-  - Assign tasks to team members
-  - Update task status
-  - Delete tasks when needed
-
-- 👥 User Management
-  - User registration
-  - User profiles
-  - Task assignment capabilities
-
-- 📊 Dashboard
-  - Overview of all tasks
-  - Filter tasks by status
-  - View tasks assigned to you
-  - View tasks created by you
 
 ## Tech Stack
 
