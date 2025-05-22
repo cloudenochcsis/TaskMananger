@@ -3,7 +3,6 @@
 A Flask-based web application for managing tasks and projects. This application provides a simple yet powerful interface for users to create, assign, and track tasks within their team.
 
 [![Version](https://img.shields.io/badge/version-v1.0.1-blue.svg)](https://github.com/cloudenochcsis/TaskMananger/releases/tag/v1.0.1)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Recent Changes (v1.0.1)
 
@@ -132,19 +131,6 @@ TaskMananger/
 └── .gitignore            # Git ignore file
 ```
 
-## Environment Variables
-
-The application can be configured using the following environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|--------|
-| `SECRET_KEY` | Flask secret key for session security | `a_secure_random_key_for_development` |
-| `FLASK_APP` | Flask application path | `KodeKloudTaskMan/app.py` |
-| `FLASK_ENV` | Flask environment (development/production) | `production` |
-| `DATABASE` | SQLite database path | `/app/instance/task_manager.sqlite` |
-
-> **Note:** For production deployments, always set a strong, unique `SECRET_KEY`.
-
 ## Database Schema
 
 The application uses SQLite with two main tables:
@@ -169,29 +155,3 @@ The application uses SQLite with two main tables:
 2. Create a new branch for your feature
 3. Make your changes
 4. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Security
-
-- Passwords are securely hashed using PBKDF2 with SHA-512 and salt
-- Backward compatibility for existing SHA-1 hashed passwords
-- Secret keys and sensitive configuration stored in environment variables
-- Session management is handled by Flask with secure cookies
-- SQL injection protection through parameterized queries
-- Proper file permissions and user isolation in Docker containers
-
-## Future Improvements
-
-- [ ] Add email notifications for task assignments and updates
-- [ ] Implement task categories and tags
-- [ ] Add file attachments to tasks
-- [ ] Implement task comments and discussion threads
-- [ ] Add user roles and permissions (admin, manager, user)
-- [ ] Implement task deadlines and reminders
-- [ ] Add multi-stage Docker builds to reduce image size
-- [ ] Implement CI/CD pipeline for automated testing and deployment
-- [ ] Add health monitoring and logging
-- [ ] Implement database migrations for schema changes
