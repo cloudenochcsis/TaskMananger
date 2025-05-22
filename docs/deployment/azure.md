@@ -1,13 +1,13 @@
 # Deploying TaskManager to Microsoft Azure
 
-This guide provides step-by-step instructions for deploying the TaskManager application to Microsoft Azure using Azure App Service and Azure Database.
+This guide provides step-by-step instructions for deploying the TaskManager application to Microsoft Azure using various Azure services including App Service, Container Instances, Container Apps, and Azure Database.
 
 ## Prerequisites
 
 - Azure account with an active subscription
 - Azure CLI installed and configured
 - Git installed
-- Docker installed (optional for local testing)
+- Docker installed (for container-based deployments)
 
 ## Deployment Options
 
@@ -175,9 +175,169 @@ When you're done with the resources, you can delete them to avoid incurring char
 az group delete --name taskmanager-rg --yes
 ```
 
+### 4. Azure Container Instances (ACI)
+
+Azure Container Instances provides a fast and simple way to run containers without managing virtual machines or adopting a higher-level service.
+
+#### Step 1: Create Azure Container Registry (if not already created)
+
+```bash
+# Login to Azure
+az login
+
+# Create a resource group (if not already created)
+az group create --name taskmanager-rg --location eastus
+
+# Create Azure Container Registry
+az acr create --resource-group taskmanager-rg --name taskmanageracr --sku Basic
+
+# Login to the registry
+az acr login --name taskmanageracr
+
+# Build and push the Docker image (if not already done)
+docker build -t taskmanager:latest .
+docker tag taskmanager:latest taskmanageracr.azurecr.io/taskmanager:latest
+docker push taskmanageracr.azurecr.io/taskmanager:latest
+```
+
+#### Step 2: Enable Admin User for ACR
+
+```bash
+# Enable admin user for the container registry
+az acr update --name taskmanageracr --resource-group taskmanager-rg --admin-enabled true
+
+# Get the registry credentials
+ACR_USERNAME=$(az acr credential show --name taskmanageracr --resource-group taskmanager-rg --query username -o tsv)
+ACR_PASSWORD=$(az acr credential show --name taskmanageracr --resource-group taskmanager-rg --query "passwords[0].value" -o tsv)
+```
+
+#### Step 3: Create Container Instance
+
+```bash
+# Create a container instance
+az container create \
+  --resource-group taskmanager-rg \
+  --name taskmanager-container \
+  --image taskmanageracr.azurecr.io/taskmanager:latest \
+  --cpu 1 \
+  --memory 1.5 \
+  --registry-login-server taskmanageracr.azurecr.io \
+  --registry-username $ACR_USERNAME \
+  --registry-password $ACR_PASSWORD \
+  --dns-name-label taskmanager-app \
+  --ports 5000 \
+  --environment-variables \
+    FLASK_APP=TaskManager/app.py \
+    FLASK_ENV=production \
+    SECRET_KEY="your-secure-secret-key" \
+    DATABASE="/app/instance/task_manager.sqlite"
+```
+
+#### Step 4: Access the Application
+
+```bash
+# Get the FQDN of the container instance
+FQDN=$(az container show --resource-group taskmanager-rg --name taskmanager-container --query ipAddress.fqdn -o tsv)
+echo "Application is available at: http://$FQDN:5000"
+```
+
+### 5. Azure Container Apps
+
+Azure Container Apps is a fully managed serverless container service that enables you to run microservices and containerized applications on a serverless platform.
+
+#### Step 1: Install the Azure Container Apps extension for the CLI
+
+```bash
+# Install the Azure Container Apps extension
+az extension add --name containerapp --upgrade
+
+# Register the Microsoft.App namespace
+az provider register --namespace Microsoft.App
+```
+
+#### Step 2: Create a Container Apps Environment
+
+```bash
+# Create a resource group (if not already created)
+az group create --name taskmanager-rg --location eastus
+
+# Create a Container Apps environment
+az containerapp env create \
+  --name taskmanager-env \
+  --resource-group taskmanager-rg \
+  --location eastus
+```
+
+#### Step 3: Create Azure Container Registry (if not already created)
+
+```bash
+# Create Azure Container Registry
+az acr create --resource-group taskmanager-rg --name taskmanageracr --sku Basic
+
+# Login to the registry
+az acr login --name taskmanageracr
+
+# Build and push the Docker image
+docker build -t taskmanager:latest .
+docker tag taskmanager:latest taskmanageracr.azurecr.io/taskmanager:latest
+docker push taskmanageracr.azurecr.io/taskmanager:latest
+
+# Enable admin user for the container registry
+az acr update --name taskmanageracr --resource-group taskmanager-rg --admin-enabled true
+```
+
+#### Step 4: Create a Container App
+
+```bash
+# Get the registry credentials
+ACR_USERNAME=$(az acr credential show --name taskmanageracr --resource-group taskmanager-rg --query username -o tsv)
+ACR_PASSWORD=$(az acr credential show --name taskmanageracr --resource-group taskmanager-rg --query "passwords[0].value" -o tsv)
+
+# Create a Container App
+az containerapp create \
+  --name taskmanager-app \
+  --resource-group taskmanager-rg \
+  --environment taskmanager-env \
+  --image taskmanageracr.azurecr.io/taskmanager:latest \
+  --registry-server taskmanageracr.azurecr.io \
+  --registry-username $ACR_USERNAME \
+  --registry-password $ACR_PASSWORD \
+  --target-port 5000 \
+  --ingress external \
+  --min-replicas 1 \
+  --max-replicas 3 \
+  --env-vars \
+    FLASK_APP=TaskManager/app.py \
+    FLASK_ENV=production \
+    SECRET_KEY="your-secure-secret-key" \
+    DATABASE="/app/instance/task_manager.sqlite"
+```
+
+#### Step 5: Access the Application
+
+```bash
+# Get the application URL
+APP_URL=$(az containerapp show --name taskmanager-app --resource-group taskmanager-rg --query properties.configuration.ingress.fqdn -o tsv)
+echo "Application is available at: https://$APP_URL"
+```
+
+#### Step 6: Configure Scaling Rules (Optional)
+
+```bash
+# Configure scaling rules based on HTTP traffic
+az containerapp update \
+  --name taskmanager-app \
+  --resource-group taskmanager-rg \
+  --scale-rule-name http-scale \
+  --scale-rule-type http \
+  --scale-rule-http-concurrency 50
+```
+
 ## Additional Resources
 
 - [Azure App Service Documentation](https://docs.microsoft.com/en-us/azure/app-service/)
 - [Azure Container Registry Documentation](https://docs.microsoft.com/en-us/azure/container-registry/)
+- [Azure Container Instances Documentation](https://docs.microsoft.com/en-us/azure/container-instances/)
+- [Azure Container Apps Documentation](https://docs.microsoft.com/en-us/azure/container-apps/)
 - [GitHub Actions for Azure](https://github.com/Azure/actions)
 - [Azure SQL Database Documentation](https://docs.microsoft.com/en-us/azure/azure-sql/)
