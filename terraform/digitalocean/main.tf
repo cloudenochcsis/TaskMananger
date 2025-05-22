@@ -85,10 +85,8 @@ resource "digitalocean_app" "taskmanager" {
         period_seconds        = 60
       }
       
-      # Routes
-      routes {
-        path = "/"
-      }
+      # HTTP Port configuration
+      http_port = 5000
     }
     
     # Optional: Database (uncomment to use)
