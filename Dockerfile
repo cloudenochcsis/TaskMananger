@@ -9,7 +9,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
-COPY KodeKloudTaskMan/requirements.txt .
+COPY TaskManager/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --user -r requirements.txt
@@ -25,7 +25,7 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV FLASK_APP=KodeKloudTaskMan/app.py
+ENV FLASK_APP=TaskManager/app.py
 ENV FLASK_ENV=production
 ENV DATABASE=/app/instance/task_manager.sqlite
 ENV SECRET_KEY=a_secure_random_key_for_development
@@ -44,7 +44,7 @@ RUN if ! getent group appuser >/dev/null; then groupadd -r appuser; fi && \
     if ! getent passwd appuser >/dev/null; then useradd -r -g appuser appuser; fi
 
 # Copy requirements file
-COPY KodeKloudTaskMan/requirements.txt .
+COPY TaskManager/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt && \
@@ -67,4 +67,4 @@ USER appuser
 EXPOSE 5000
 
 # Command to run the application
-CMD ["sh", "-c", "mkdir -p /app/instance && touch /app/instance/task_manager.sqlite && chmod -R 777 /app/instance && chown -R appuser:appuser /app/instance && echo 'DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS tasks; CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL); CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, status TEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, created_by INTEGER NOT NULL, assigned_to INTEGER NOT NULL, FOREIGN KEY (created_by) REFERENCES users (id), FOREIGN KEY (assigned_to) REFERENCES users (id));' | sqlite3 /app/instance/task_manager.sqlite && gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 KodeKloudTaskMan.app:app"]
+CMD ["sh", "-c", "mkdir -p /app/instance && touch /app/instance/task_manager.sqlite && chmod -R 777 /app/instance && chown -R appuser:appuser /app/instance && echo 'DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS tasks; CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL); CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, status TEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, created_by INTEGER NOT NULL, assigned_to INTEGER NOT NULL, FOREIGN KEY (created_by) REFERENCES users (id), FOREIGN KEY (assigned_to) REFERENCES users (id));' | sqlite3 /app/instance/task_manager.sqlite && gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 TaskManager.app:app"]

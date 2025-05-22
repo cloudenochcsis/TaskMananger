@@ -30,7 +30,7 @@ test session to ensure test isolation.
 import os
 import tempfile
 import pytest
-from KodeKloudTaskMan.app import app, init_db
+from TaskManager.app import app, init_db
 
 
 @pytest.fixture

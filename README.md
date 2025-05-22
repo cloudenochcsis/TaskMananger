@@ -67,14 +67,14 @@ You can run this application in two ways:
 
 4. Initialize the database:
    ```bash
-   flask --app KodeKloudTaskMan/app.py init-db
+   flask --app TaskManager/app.py init-db
    ```
 
 ## Running the Application
 
 1. Start the Flask development server:
    ```bash
-   flask --app KodeKloudTaskMan/app.py run
+   flask --app TaskManager/app.py run
    ```
 
 2. Open your web browser and navigate to:
@@ -86,7 +86,7 @@ You can run this application in two ways:
 
 ```
 TaskMananger/
-├── KodeKloudTaskMan/
+├── TaskManager/
 │   ├── app.py              # Main application file
 │   ├── schema.sql          # Database schema
 │   ├── requirements.txt    # Python dependencies
