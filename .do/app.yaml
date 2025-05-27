@@ -3,8 +3,8 @@ services:
   - name: web
     image:
       registry: registry.digitalocean.com
-      repository: <DOCR_NAME>/taskmanager  # Replace <DOCR_NAME> with your actual DOCR name
-      tag: latest  # Or use ${CIRCLE_SHA1} or your preferred tag
+      repository: akpa-taskmanager/taskmanager
+      tag: latest  # Or use your preferred tag, e.g., ${CIRCLE_SHA1}
     envs:
       - key: FLASK_ENV
         value: production
