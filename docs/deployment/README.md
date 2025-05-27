@@ -37,3 +37,14 @@ All deployment guides follow these DevOps best practices:
 ## Additional Resources
 
 For more information on DevOps best practices and cloud deployments, refer to the official documentation of each cloud provider.
+
+## Continuous Integration & Deployment with CircleCI
+
+TaskManager uses [CircleCI](https://circleci.com/) for automated testing and deployment to AWS, Azure, and DigitalOcean. The pipeline includes:
+
+- Automated testing, linting, and security scanning (Bandit for Python, Trivy for Docker)
+- Secure management of secrets using CircleCI environment variables and contexts
+- Deployment jobs for each supported cloud provider
+- Enforcement of DevOps and security best practices
+
+**For detailed CI/CD configuration and security guidelines, see [`../.circleci/README.md`](../../.circleci/README.md).**
