@@ -3,7 +3,7 @@ services:
   - name: web
     image:
       registry_type: DOCR
-      registry: registry.digitalocean.com
+      registry: akpa-taskmanager
       repository: akpa-taskmanager/taskmanager
       tag: latest  # Or use your preferred tag, e.g., ${CIRCLE_SHA1}
     envs:
