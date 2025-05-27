@@ -8,8 +8,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# Copy requirements and install Python dependencies
 COPY TaskManager/requirements.txt .
-
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Runtime stage
@@ -22,7 +22,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends sqlite3 && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy only the installed Python packages from builder
+# Copy installed Python packages from builder
 COPY --from=builder /root/.local /root/.local
 
 # Set environment variables
@@ -34,8 +34,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/root/.local/bin:$PATH"
 # ENV SECRET_KEY is intentionally not set here for security.
 
+# Copy the rest of the application
 COPY . .
 
+# Create and set permissions for instance directory
 RUN mkdir -p /app/instance && \
     chmod -R 777 /app/instance
 
