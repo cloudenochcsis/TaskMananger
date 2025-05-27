@@ -1,0 +1,31 @@
+name: taskmanager
+services:
+  - name: web
+    dockerfile_path: ./Dockerfile
+    source_dir: .
+    envs:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        scope: RUN_AND_BUILD_TIME
+        value: ${SECRET_KEY} # Set in the App Platform dashboard for security
+    http_port: 5000
+    routes:
+      - path: /
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    health_check:
+      http_path: /
+      port: 5000
+    run_command: gunicorn -b 0.0.0.0:5000 TaskManager.app:app
+    # If you use a database, you can add a database component and link it here
+
+# Uncomment and configure if you want to add a managed database
+# databases:
+#   - engine: PG
+#     name: taskmanager-db
+#     production: true
+#     user: doadmin
+#     version: "13"
+#     size: db-s-1vcpu-1gb
+#     num_nodes: 1 
