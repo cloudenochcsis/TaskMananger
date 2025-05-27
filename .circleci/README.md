@@ -48,3 +48,14 @@ To trigger a deployment:
    - Deploy to the selected cloud provider
 
 To change the deployment target, update the `deployment-target` parameter in the CircleCI UI or via API.
+
+## Security Best Practices
+
+- **Never hardcode secrets** (API keys, passwords, tokens) in code or config files. Always use CircleCI environment variables or contexts.
+- **Use CircleCI Contexts** for managing secrets shared across multiple projects or teams.
+- **Rotate secrets regularly** and update them in CircleCI project or context settings.
+- **Apply the principle of least privilege**: ensure all credentials used in CI have only the permissions required for deployment.
+- **Do not echo secrets** in scripts or logs. CircleCI masks environment variables, but avoid printing them directly.
+- **Audit and remove unused secrets** from CircleCI settings periodically.
+- **Use official, up-to-date Docker images** and pin versions to avoid unexpected changes.
+- **Consider adding security scanning jobs** (e.g., Bandit for Python, Trivy for Docker images) to your pipeline for automated vulnerability checks.

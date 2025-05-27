@@ -44,6 +44,41 @@ commands:
             python -m pytest
 
 jobs:
+  lint:
+    executor: python-docker
+    steps:
+      - checkout
+      - run:
+          name: Install flake8
+          command: pip install flake8
+      - run:
+          name: Run flake8
+          command: flake8 .
+
+  security-scan-python:
+    executor: python-docker
+    steps:
+      - checkout
+      - run:
+          name: Install Bandit
+          command: pip install bandit
+      - run:
+          name: Run Bandit Security Scan
+          command: bandit -r TaskManager
+
+  security-scan-docker:
+    docker:
+      - image: aquasec/trivy:latest
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker Image
+          command: docker build -t taskmanager:${CIRCLE_SHA1} .
+      - run:
+          name: Run Trivy Scan
+          command: trivy image --exit-code 1 --severity HIGH,CRITICAL taskmanager:${CIRCLE_SHA1}
+
   test:
     executor: python-docker
     steps:
@@ -127,7 +162,14 @@ workflows:
   version: 2
   test-and-deploy:
     jobs:
-      - test
+      - lint
+      - security-scan-python
+      - security-scan-docker
+      - test:
+          requires:
+            - lint
+            - security-scan-python
+            - security-scan-docker
       - deploy-aws:
           requires:
             - test
@@ -152,3 +194,5 @@ workflows:
               only: main
           when:
             equal: [ digitalocean, << pipeline.parameters.deployment-target >> ]
+
+# NOTE: All secrets must be referenced via environment variables or contexts. Never hardcode secrets in this file or in scripts.
