@@ -1,0 +1,154 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@3.1
+  azure-cli: circleci/azure-cli@1.2
+  docker: circleci/docker@2.2.0
+
+parameters:
+  deployment-target:
+    type: enum
+    default: "aws"
+    enum: ["aws", "azure", "digitalocean"]
+
+executors:
+  python-docker:
+    docker:
+      - image: cimg/python:3.8
+
+commands:
+  install-dependencies:
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-deps-{{ .Branch }}-{{ checksum "requirements.txt" }}
+            - v1-deps-{{ .Branch }}
+      - run:
+          name: Install Dependencies
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - save_cache:
+          key: v1-deps-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          paths:
+            - "venv"
+  
+  run-tests:
+    steps:
+      - run:
+          name: Run Tests
+          command: |
+            . venv/bin/activate
+            python -m pytest
+
+jobs:
+  test:
+    executor: python-docker
+    steps:
+      - install-dependencies
+      - run-tests
+
+  deploy-aws:
+    executor: python-docker
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          aws-region: AWS_REGION
+      - docker/build:
+          image: $AWS_ECR_ACCOUNT_URL/taskmanager
+          tag: ${CIRCLE_SHA1}
+      - run:
+          name: Push to ECR
+          command: |
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_ACCOUNT_URL
+            docker push $AWS_ECR_ACCOUNT_URL/taskmanager:${CIRCLE_SHA1}
+      - run:
+          name: Deploy to ECS
+          command: |
+            aws ecs update-service --cluster taskmanager-cluster \
+              --service taskmanager-service \
+              --force-new-deployment
+
+  deploy-azure:
+    executor: python-docker
+    steps:
+      - checkout
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - docker/build:
+          image: taskmanager
+          tag: ${CIRCLE_SHA1}
+      - run:
+          name: Push to Azure Container Registry
+          command: |
+            az acr login --name $AZURE_REGISTRY_NAME
+            docker tag taskmanager:${CIRCLE_SHA1} $AZURE_REGISTRY_NAME.azurecr.io/taskmanager:${CIRCLE_SHA1}
+            docker push $AZURE_REGISTRY_NAME.azurecr.io/taskmanager:${CIRCLE_SHA1}
+      - run:
+          name: Deploy to AKS
+          command: |
+            az aks get-credentials --resource-group $AZURE_RESOURCE_GROUP --name $AKS_CLUSTER_NAME
+            kubectl set image deployment/taskmanager taskmanager=$AZURE_REGISTRY_NAME.azurecr.io/taskmanager:${CIRCLE_SHA1}
+
+  deploy-digitalocean:
+    executor: python-docker
+    steps:
+      - checkout
+      - docker/build:
+          image: taskmanager
+          tag: ${CIRCLE_SHA1}
+      - run:
+          name: Install doctl
+          command: |
+            cd /tmp
+            wget https://github.com/digitalocean/doctl/releases/download/v1.101.0/doctl-1.101.0-linux-amd64.tar.gz
+            tar xf doctl-1.101.0-linux-amd64.tar.gz
+            sudo mv doctl /usr/local/bin
+      - run:
+          name: Auth with DigitalOcean
+          command: doctl auth init -t $DIGITALOCEAN_ACCESS_TOKEN
+      - run:
+          name: Push to DigitalOcean Container Registry
+          command: |
+            doctl registry login
+            docker tag taskmanager:${CIRCLE_SHA1} registry.digitalocean.com/$DOCR_NAME/taskmanager:${CIRCLE_SHA1}
+            docker push registry.digitalocean.com/$DOCR_NAME/taskmanager:${CIRCLE_SHA1}
+      - run:
+          name: Update Deployment
+          command: |
+            doctl kubernetes cluster kubeconfig save $DOKUBE_CLUSTER_NAME
+            kubectl set image deployment/taskmanager taskmanager=registry.digitalocean.com/$DOCR_NAME/taskmanager:${CIRCLE_SHA1}
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      - test
+      - deploy-aws:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+          when:
+            equal: [ aws, << pipeline.parameters.deployment-target >> ]
+      - deploy-azure:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+          when:
+            equal: [ azure, << pipeline.parameters.deployment-target >> ]
+      - deploy-digitalocean:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+          when:
+            equal: [ digitalocean, << pipeline.parameters.deployment-target >> ]
