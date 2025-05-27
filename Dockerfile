@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.9-slim as builder
+FROM python:3.9-slim AS builder
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=TaskManager/app.py
 ENV FLASK_ENV=production
 ENV DATABASE=/app/instance/task_manager.sqlite
-ENV SECRET_KEY=a_secure_random_key_for_development
+# ENV SECRET_KEY is intentionally not set here for security. Set it at runtime via your deployment platform.
 ENV PATH="/home/appuser/.local/bin:$PATH"
 
 # Set the working directory in the container
