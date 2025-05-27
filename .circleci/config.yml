@@ -109,10 +109,9 @@ jobs:
             docker tag taskmanager:${CIRCLE_SHA1} registry.digitalocean.com/$DOCR_NAME/taskmanager:${CIRCLE_SHA1}
             docker push registry.digitalocean.com/$DOCR_NAME/taskmanager:${CIRCLE_SHA1}
       - run:
-          name: Update Deployment
+          name: Trigger App Platform Deployment (placeholder)
           command: |
-            doctl kubernetes cluster kubeconfig save $DOKUBE_CLUSTER_NAME
-            kubectl set image deployment/taskmanager taskmanager=registry.digitalocean.com/$DOCR_NAME/taskmanager:${CIRCLE_SHA1}
+            echo "TODO: Add doctl apps update <APP_ID> --spec <PATH_TO_SPEC> once App Platform app ID and spec file are available."
 
 workflows:
   version: 2
