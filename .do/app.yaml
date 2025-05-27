@@ -4,7 +4,7 @@ services:
     image:
       registry_type: DOCR
       registry: akpa-taskmanager
-      repository: akpa-taskmanager/taskmanager
+      repository: taskmanager
       tag: latest  # Or use your preferred tag, e.g., ${CIRCLE_SHA1}
     envs:
       - key: FLASK_ENV
