@@ -24,6 +24,7 @@ docker-compose.yml
 *.sql
 *.csv
 *.txt
+!requirements.txt
 *.json
 *.yaml
 *.yml
