@@ -33,11 +33,15 @@ az acr login --name taskmanageracr
 
 #### Step 2: Build and Push Docker Image
 
+> **Note:**  
+> Make sure you are in your project root and that your `.dockerignore` file does **not** exclude `requirements.txt`.  
+> If you have `*.txt` in `.dockerignore`, add `!requirements.txt` below it.
+
 ```bash
-# Build the Docker image
+# Build the Docker image from the project root
 docker build -t taskmanager:latest .
 
-# Tag the image for ACR
+# Tag the image for Azure Container Registry (ACR)
 docker tag taskmanager:latest taskmanageracr.azurecr.io/taskmanager:latest
 
 # Push the image to ACR
@@ -58,6 +62,8 @@ az webapp config container set --name taskmanager-app --resource-group taskmanag
 ```
 
 #### Step 4: Configure Environment Variables
+
+> **Best Practice:** Use Azure Key Vault or App Service secrets for sensitive values like `SECRET_KEY` in production.
 
 ```bash
 # Set environment variables
@@ -127,6 +133,8 @@ jobs:
 5. Create a secret named `AZURE_WEBAPP_PUBLISH_PROFILE` with the content from the publish profile
 
 ### 3. Azure Database for SQLite Alternative
+
+> **Note:** SQLite is suitable for development and testing. For production, use Azure SQL Database or another managed database service.
 
 Since Azure doesn't have a managed SQLite service, consider using Azure SQL Database or Azure Cosmos DB:
 
@@ -341,3 +349,4 @@ az containerapp update \
 - [Azure Container Apps Documentation](https://docs.microsoft.com/en-us/azure/container-apps/)
 - [GitHub Actions for Azure](https://github.com/Azure/actions)
 - [Azure SQL Database Documentation](https://docs.microsoft.com/en-us/azure/azure-sql/)
+- [Docker Ignore Reference](https://docs.docker.com/engine/reference/builder/#dockerignore-file)
